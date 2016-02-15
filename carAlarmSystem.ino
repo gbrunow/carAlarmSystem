@@ -1,10 +1,18 @@
-
 /* --- define pinout --- */
-#define IGNITION_PIN 7
 #define X_PIN A15
 #define Y_PIN A14
 #define Z_PIN A13
-#define ALARM_PIN 6
+#define ALARM_PIN 13
+#define IGNITION_PIN 12
+#define CONFIRM_KEY_PIN 11
+#define KEY1_PIN 10
+//#define KEY2_PIN 9
+//#define KEY3_PIN 8
+//#define KEY4_PIN 7
+//#define KEY5_PIN 6
+//#define KEY6_PIN 5
+//#define KEY7_PIN 4
+//#define KEY8_PIN 3
 
 /* --- define machine states --- */
 #define state_off_ok    1
@@ -20,12 +28,34 @@
 #define alarmDelay 3000
 #define ADCDelay 250
 
+/* --- configuration --*/
+#define DIGITAL_INPUTS 3
+
+int input[DIGITAL_INPUTS] = {IGNITION_PIN, CONFIRM_KEY_PIN, KEY1_PIN};
+boolean inputState[DIGITAL_INPUTS];
+boolean lastInputState[DIGITAL_INPUTS];
+boolean reading[DIGITAL_INPUTS];
+
 int state = state_off_ok;
 int prev_state = state_off_ok;
 
 void setup() {
-  // put your setup code here, to run once:
+  //setup analog inputs
+  pinMode(X_PIN, INPUT);
+  pinMode(Y_PIN, INPUT);
+  pinMode(Z_PIN, INPUT);
 
+  //setup digital outputs
+  pinMode(ALARM_PIN, OUTPUT);
+  
+  //setup digital inputs
+  for(int i = 0; i < DIGITAL_INPUTS; i++){
+    pinMode(input[i], INPUT);
+    digitalWrite(input[i], HIGH);   //turn on pull up resistor
+    inputState[i] = HIGH;
+    lastInputState[i] = HIGH;
+  }
+  
 }
 
 boolean passAcceCheck = true;
@@ -125,4 +155,9 @@ void loop() {
       break;
   }
 
+  if(alarmTimeOut || alarmDisarmed){
+    stopAlarm();
+  } else {
+    triggerAlarm();
+  }
 }

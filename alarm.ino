@@ -16,3 +16,11 @@ void startAlarmTimer(){
   
 }
 
+void triggerAlarm(){
+  
+}
+
+void stopAlarm(){
+  
+}
+
