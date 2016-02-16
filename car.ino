@@ -1,5 +1,4 @@
 boolean isOn(){
-
-  return true;
+  return inputState[CONFIRM_KEY_INDEX];
 }
 

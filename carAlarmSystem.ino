@@ -1,18 +1,12 @@
+#include<Wire.h>
+
 /* --- define pinout --- */
-#define X_PIN A15
-#define Y_PIN A14
-#define Z_PIN A13
+#define X_PIN A0
+#define Y_PIN A1
+#define Z_PIN A2
 #define ALARM_PIN 13
 #define IGNITION_PIN 12
 #define CONFIRM_KEY_PIN 11
-#define KEY1_PIN 10
-//#define KEY2_PIN 9
-//#define KEY3_PIN 8
-//#define KEY4_PIN 7
-//#define KEY5_PIN 6
-//#define KEY6_PIN 5
-//#define KEY7_PIN 4
-//#define KEY8_PIN 3
 
 /* --- define machine states --- */
 #define state_off_ok    1
@@ -26,20 +20,41 @@
 #define minVal 265
 #define maxVal 402
 #define alarmDelay 3000
-#define ADCDelay 250
+#define triggerAlarmDelay 5000
+#define armAlarmDelay 5000
+#define acceDelay 250
+#define debounceDelay 2
+#define PASSWORD 150 //2, 3, 5, 8 | 10010110
+#define XY_THRESHOLD 2.5
+#define Z_THRESHOLD 15
 
-/* --- configuration --*/
-#define DIGITAL_INPUTS 3
+/* --- organiza digital input that need debounce --- */
+#define DIGITAL_INPUTS 2
+#define IGNITION_INDEX 0
+#define CONFIRM_KEY_INDEX 1
 
-int input[DIGITAL_INPUTS] = {IGNITION_PIN, CONFIRM_KEY_PIN, KEY1_PIN};
+int input[DIGITAL_INPUTS] = { IGNITION_PIN, CONFIRM_KEY_PIN };
+
 boolean inputState[DIGITAL_INPUTS];
 boolean lastInputState[DIGITAL_INPUTS];
 boolean reading[DIGITAL_INPUTS];
+unsigned long bounceTime[DIGITAL_INPUTS];
 
 int state = state_off_ok;
-int prev_state = state_off_ok;
+int prev_state = -1;
+
+double x;
+double y;
+double z;
+double lastX;
+double lastY;
+double lastZ;
 
 void setup() {
+  
+  //enable I2C communication
+  Wire.begin();
+  
   //setup analog inputs
   pinMode(X_PIN, INPUT);
   pinMode(Y_PIN, INPUT);
@@ -55,6 +70,12 @@ void setup() {
     inputState[i] = HIGH;
     lastInputState[i] = HIGH;
   }
+
+  getAxes(&x, &y, &z);
+
+  lastX = x;
+  lastY = y;
+  lastZ = z;
   
 }
 
@@ -66,7 +87,11 @@ boolean alarmDisarmed = false;
 void loop() {  
   switch (state){    
     case state_off_ok:
-    
+
+     if(prev_state != state_off_ok){
+        startAlarmTimer();
+      }
+      
       passAcceCheck = checkAcce();      
       if(passAcceCheck){
         state = state_ok;
@@ -160,4 +185,6 @@ void loop() {
   } else {
     triggerAlarm();
   }
+
+  readDigitalInputs();
 }

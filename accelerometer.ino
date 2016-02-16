@@ -18,7 +18,19 @@ void getAxes(double *x, double *y, double *z){
 }
 
 boolean checkAcce(){
-
-  return true;
+  if(isTimeOut()){
+    getAxes(&x, &y, &z);
+    boolean overThreshold = abs(lastX - x) > XY_THRESHOLD ||
+                            abs(lastY - y) > XY_THRESHOLD || 
+                            abs(lastZ - z) > Z_THRESHOLD;
+    lastX = x;
+    lastY = y;
+    lastZ = z;
+    
+    return overThreshold;
+    
+  } else {
+    return true;
+  }
 }
 
